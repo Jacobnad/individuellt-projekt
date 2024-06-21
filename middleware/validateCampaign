@@ -1,0 +1,31 @@
+
+
+
+const { menuDb } = require('../data/db');
+
+const validateCampaign = (req, res, next) => {
+  const { products, campaignPrice } = req.body;
+
+  if (!products || !Array.isArray(products) || products.length === 0) {
+    return res.status(400).json({ message: "Produkter krävs och får inte vara tomma." });
+  }
+
+  if (!campaignPrice || typeof campaignPrice !== 'number') {
+    return res.status(400).json({ message: "Kampanjpriset måste vara ett nummer och får inte saknas." });
+  }
+
+  const productTitles = products.map(product => product.title);
+  menuDb.find({ title: { $in: productTitles } }, (err, docs) => {
+    if (err) {
+      console.error('Fel vid kontroll av produkter i menyn:', err);
+      return res.status(500).json({ error: 'Internt serverfel.' });
+    } else if (docs.length !== products.length) {
+      return res.status(400).json({ message: "En eller flera av produkterna finns redan i menyn." });
+    } else {
+      next();
+    }
+  });
+};
+
+module.exports = validateCampaign;
+
